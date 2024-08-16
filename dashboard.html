@@ -1,0 +1,78 @@
+<?php
+session_start();
+if (!isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit;
+}
+
+$user_id = $_SESSION['user_id'];
+
+// الاتصال بقاعدة البيانات Access
+$conn = new PDO("odbc:Driver={Microsoft Access Driver (*.mdb, *.accdb)};Dbq=amintest.accdb;");
+
+// جلب البيانات المرتبطة بالمستخدم
+$stmt = $conn->prepare("SELECT * FROM Names WHERE user_id = ?");
+$stmt->execute([$user_id]);
+$names = $stmt->fetchAll();
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $name = $_POST['name'];
+    $evaluation = $_POST['evaluation'];
+
+    $stmt = $conn->prepare("INSERT INTO Names (user_id, name, evaluation) VALUES (?, ?, ?)");
+    $stmt->execute([$user_id, $name, $evaluation]);
+
+    header("Location: dashboard.php");
+    exit;
+}
+?>
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>لوحة التحكم</title>
+    <style>
+        body { font-family: Arial, sans-serif; direction: rtl; }
+        .dashboard-container { width: 500px; margin: 0 auto; padding-top: 50px; }
+        .input-field { margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; }
+        table, th, td { border: 1px solid black; }
+        th, td { padding: 8px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <h2>لوحة التحكم</h2>
+        <form method="POST">
+            <div class="input-field">
+                <label for="name">الاسم:</label>
+                <input type="text" name="name" id="name" required>
+            </div>
+            <div class="input-field">
+                <label for="evaluation">التقييم:</label>
+                <input type="text" name="evaluation" id="evaluation" required>
+            </div>
+            <button type="submit">إضافة</button>
+        </form>
+
+        <h3>الأسماء والتقييمات</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>الاسم</th>
+                    <th>التقييم</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($names as $name): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($name['name']) ?></td>
+                        <td><?= htmlspecialchars($name['evaluation']) ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

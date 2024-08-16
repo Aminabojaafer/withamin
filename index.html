@@ -1,0 +1,55 @@
+<?php
+session_start();
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $username = $_POST['username'];
+    $password = $_POST['password'];
+
+    // الاتصال بقاعدة البيانات Access
+    $conn = new PDO("odbc:Driver={Microsoft Access Driver (*.mdb, *.accdb)};Dbq=amintest.accdb;");
+    
+    $stmt = $conn->prepare("SELECT * FROM Users WHERE username = ? AND password = ?");
+    $stmt->execute([$username, $password]);
+    $user = $stmt->fetch();
+
+    if ($user) {
+        $_SESSION['user_id'] = $user['id'];
+        header("Location: dashboard.html");
+        exit;
+    } else {
+        $error = "Invalid username or password";
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>تسجيل الدخول</title>
+    <style>
+        body { font-family: Arial, sans-serif; direction: rtl; }
+        .login-container { width: 300px; margin: 0 auto; padding-top: 100px; }
+        .input-field { margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>تسجيل الدخول</h2>
+        <?php if (isset($error)): ?>
+            <p style="color: red;"><?= $error ?></p>
+        <?php endif; ?>
+        <form method="POST">
+            <div class="input-field">
+                <label for="username">اسم المستخدم:</label>
+                <input type="text" name="username" id="username" required>
+            </div>
+            <div class="input-field">
+                <label for="password">كلمة المرور:</label>
+                <input type="password" name="password" id="password" required>
+            </div>
+            <button type="submit">دخول</button>
+        </form>
+    </div>
+</body>
+</html>
